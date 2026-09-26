@@ -1,0 +1,7 @@
+@import '@shared/styles/base.css';
+
+/* 판매자 앱은 구매자 앱과 구별되도록 강조색만 초록 계열로 바꾼다 */
+:root {
+  --brand: #2e7d32;
+  --brand-dark: #1b5e20;
+}

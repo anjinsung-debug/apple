@@ -1,0 +1,186 @@
+// Prisma schema — PostgreSQL (Railway)
+// 스키마를 바꾸면 `npx prisma migrate dev --name <변경내용>` 으로 마이그레이션을 추가한다.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// 사용자
+// ─────────────────────────────────────────────
+// (SQLite 는 enum 미지원 → status/role 은 String + 상수로 관리)
+
+model User {
+  id        Int      @id @default(autoincrement())
+  kakaoId   String   @unique                  // 카카오 고유 ID
+  nickname  String
+  email     String?
+  phone     String?
+  roles     String   @default("BUYER")        // 콤마로 구분된 역할 목록 (예: "BUYER,SELLER"). BUYER | SELLER | ADMIN
+  bankName    String?                         // 판매자 입금 계좌 - 은행명
+  bankAccount String?                         // 판매자 입금 계좌 - 계좌번호
+  bankHolder  String?                         // 판매자 입금 계좌 - 예금주
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  addresses    Address[]
+  products     Product[]      @relation("SellerProducts")
+  buyerOrders  Order[]        @relation("BuyerOrders")
+  sellerOrders Order[]        @relation("SellerOrders")
+  devices      DeviceToken[]
+  notifications Notification[]
+}
+
+// FCM 푸시 토큰 (기기별)
+model DeviceToken {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  token     String   @unique
+  platform  String   @default("web")          // web | android | ios
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ─────────────────────────────────────────────
+// 배송지 (다음(카카오) 우편번호 API 결과 저장)
+// ─────────────────────────────────────────────
+model Address {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  label        String   @default("우리집")
+  recipient    String                          // 받는 사람
+  phone        String
+  zonecode     String                          // 우편번호
+  roadAddress  String                          // 도로명 주소
+  jibunAddress String?                         // 지번 주소
+  detail       String?                         // 상세 주소
+  lat          Float?                          // 위도 (TMAP 지오코딩 결과 캐시)
+  lng          Float?                          // 경도
+  isDefault    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders Order[]
+
+  @@index([userId])
+}
+
+// ─────────────────────────────────────────────
+// 상품 (현재는 '사과'로 고정)
+// ─────────────────────────────────────────────
+model Product {
+  id          Int      @id @default(autoincrement())
+  sellerId    Int
+  name        String                           // 예: 부사 사과
+  variety     String?                          // 품종
+  description String?
+  imageUrl    String?
+  unit        String   @default("kg")          // kg | 박스 | 개
+  unitAmount  Float    @default(1)             // 1 단위당 수량 (예: 5kg 박스 → 5)
+  price       Int                              // 단위당 가격(원)
+  stock       Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  seller User        @relation("SellerProducts", fields: [sellerId], references: [id])
+  items  OrderItem[]
+
+  @@index([sellerId])
+}
+
+// ─────────────────────────────────────────────
+// 주문
+// ─────────────────────────────────────────────
+model Order {
+  id        Int      @id @default(autoincrement())
+  orderNo   String   @unique                   // 사람이 읽는 주문번호 (AP240101-0001)
+  buyerId   Int
+  sellerId  Int
+  addressId Int?
+
+  status     String   @default("PENDING")      // PENDING | ACCEPTED | DELIVERING | DELIVERED | CANCELLED
+  totalPrice Int      @default(0)
+  memo       String?                           // 요청사항
+
+  depositorName      String                    // 입금자명 (판매자가 통장에서 입금 확인할 때 대조)
+  paymentConfirmedAt DateTime?                 // 판매자가 입금을 확인한 시각 (있어야 접수 가능)
+
+  // 주문 시점 배송지 스냅샷 (주소가 나중에 수정/삭제돼도 배송 이력 보존)
+  recipient    String
+  phone        String
+  zonecode     String
+  roadAddress  String
+  jibunAddress String?
+  detail       String?
+  lat          Float?
+  lng          Float?
+
+  acceptedAt  DateTime?
+  startedAt   DateTime?                        // 배송 시작
+  deliveredAt DateTime?
+  cancelledAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  buyer   User             @relation("BuyerOrders", fields: [buyerId], references: [id])
+  seller  User             @relation("SellerOrders", fields: [sellerId], references: [id])
+  address Address?         @relation(fields: [addressId], references: [id])
+  items   OrderItem[]
+  logs    OrderStatusLog[]
+
+  @@index([buyerId])
+  @@index([sellerId, status])
+}
+
+model OrderItem {
+  id        Int    @id @default(autoincrement())
+  orderId   Int
+  productId Int
+
+  // 상품 스냅샷
+  name     String
+  unit     String
+  price    Int
+  quantity Int
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+}
+
+model OrderStatusLog {
+  id        Int      @id @default(autoincrement())
+  orderId   Int
+  status    String
+  memo      String?
+  createdAt DateTime @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+}
+
+// 알림 이력 (FCM 발송 로그)
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  orderId   Int?
+  type      String                              // ORDER_CREATED | ORDER_ACCEPTED | ...
+  title     String
+  body      String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+}
