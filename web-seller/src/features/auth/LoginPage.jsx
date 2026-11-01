@@ -29,7 +29,7 @@ export default function LoginPage() {
     handledRef.current = true;
 
     // code 는 1회용이라 재시도/재실행이 다시 쓰지 못하도록 URL 에서 즉시 제거
-    window.history.replaceState(null, '', '/login');
+    window.history.replaceState(null, '', `${import.meta.env.BASE_URL}login`);
 
     if (kakaoError) {
       setError('카카오 로그인이 취소되었습니다.');

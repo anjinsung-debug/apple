@@ -26,6 +26,8 @@ const schema = z.object({
 
   KAKAO_REST_API_KEY: optionalString,
   KAKAO_CLIENT_SECRET: optionalString,
+  // 판매자 앱 로그인을 허용할 카카오 ID (쉼표 구분). 비어 있으면 아무도 판매자가 될 수 없다.
+  SELLER_KAKAO_IDS: z.string().default(''),
 
   TMAP_APP_KEY: optionalString,
   TMAP_DAILY_LIMIT: z.coerce.number().int().positive().default(500),
@@ -58,6 +60,11 @@ export const env = {
 
   /** CORS 허용 오리진 목록 (비어 있으면 전체 허용) */
   corsOrigins: raw.CORS_ORIGIN.split(',')
+    .map((s) => s.trim())
+    .filter(Boolean),
+
+  /** 판매자로 로그인할 수 있는 카카오 ID 목록 */
+  sellerKakaoIds: raw.SELLER_KAKAO_IDS.split(',')
     .map((s) => s.trim())
     .filter(Boolean),
 

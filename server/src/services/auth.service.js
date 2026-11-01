@@ -42,11 +42,19 @@ async function findOrCreateUser({ kakaoId, nickname, email = null }, role) {
   return existing;
 }
 
+/** 판매자 앱 로그인은 SELLER_KAKAO_IDS 에 등록된 카카오 계정만 허용한다 */
+export function assertCanBeSeller(kakaoId) {
+  if (!env.sellerKakaoIds.includes(kakaoId)) {
+    throw ApiError.forbidden(`판매자 권한이 없는 계정입니다. (카카오 ID: ${kakaoId})`);
+  }
+}
+
 export const authService = {
   /** 카카오 인가 코드 → access_token 교환 → 프로필 조회 → 로그인/회원가입 */
   async loginWithKakao({ code, redirectUri, role }) {
     const accessToken = await exchangeKakaoCode({ code, redirectUri });
     const profile = await fetchKakaoProfile(accessToken);
+    if (role === ROLE.SELLER) assertCanBeSeller(profile.kakaoId);
     const user = await findOrCreateUser(profile, role);
     return { token: signToken(user), user: toPublicUser(user) };
   },
