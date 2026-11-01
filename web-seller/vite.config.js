@@ -3,6 +3,9 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig({
+  // 배포 시 한 도메인의 /seller 경로에서 서비스된다 (루트 vercel.json 참고)
+  base: '/seller/',
+  build: { outDir: 'dist/seller' },
   plugins: [react()],
   resolve: {
     alias: {

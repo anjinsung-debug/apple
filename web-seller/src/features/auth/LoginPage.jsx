@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@shared/auth/AuthProvider.jsx';
 
-const KAKAO_REDIRECT_URI = `${window.location.origin}/login`;
+const KAKAO_REDIRECT_URI = `${window.location.origin}${import.meta.env.BASE_URL}login`;
 const FROM_KEY = 'kakao.from';
 
 export default function LoginPage() {

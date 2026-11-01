@@ -15,7 +15,8 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const { request } = e;
   // API 는 항상 네트워크 우선 (주문 데이터는 캐시하면 안 됨)
-  if (request.method !== 'GET' || new URL(request.url).pathname.startsWith('/api')) return;
+  const { pathname } = new URL(request.url);
+  if (request.method !== 'GET' || pathname.startsWith('/api') || pathname.startsWith('/seller')) return;
 
   e.respondWith(
     caches.match(request).then((hit) => hit || fetch(request).catch(() => caches.match('/index.html'))),

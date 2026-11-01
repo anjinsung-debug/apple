@@ -1,4 +1,5 @@
-const TOKEN_KEY = 'apple.token';
+// 구매자·판매자 앱이 같은 도메인을 쓰므로 앱(base 경로)별로 토큰을 따로 둔다
+const TOKEN_KEY = `apple.token${import.meta.env.BASE_URL}`;
 
 /** JWT 보관소 — localStorage 한 곳에서만 다룬다 */
 export const tokenStore = {

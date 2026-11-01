@@ -7,7 +7,7 @@ import './styles/app.css';
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename="/seller">
       <AuthProvider>
         <App />
       </AuthProvider>
@@ -18,6 +18,6 @@ createRoot(document.getElementById('root')).render(
 // PWA: 서비스 워커 등록
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch((err) => console.warn('SW 등록 실패', err));
+    navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch((err) => console.warn('SW 등록 실패', err));
   });
 }

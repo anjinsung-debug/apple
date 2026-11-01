@@ -2,12 +2,13 @@
   "name": "사과랑 판매자 · 주문·배송 관리",
   "short_name": "사과랑 판매자",
   "description": "들어온 주문 접수, 배송 경로 안내, 판매 품목 관리",
-  "start_url": "/",
+  "start_url": "/seller/",
+  "scope": "/seller/",
   "display": "standalone",
   "background_color": "#f0f7f5",
   "theme_color": "#2e7d32",
   "lang": "ko",
   "icons": [
-    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+    { "src": "/seller/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
   ]
 }
