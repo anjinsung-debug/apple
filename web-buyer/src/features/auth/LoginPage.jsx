@@ -77,6 +77,9 @@ export default function LoginPage() {
         카카오로 시작하기
       </button>
 
+      {/* 개발용 로그인은 로컬 개발 서버에서만 보인다 (배포 빌드에서는 빠짐) */}
+      {import.meta.env.DEV && (
+      <>
       <div className="divider">
         <span>또는 개발용 계정</span>
       </div>
@@ -94,6 +97,8 @@ export default function LoginPage() {
           <code> ALLOW_DEV_LOGIN=false </code>로 꺼주세요.
         </p>
       </div>
+      </>
+      )}
     </div>
   );
 }
